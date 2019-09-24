@@ -103,7 +103,9 @@ If you get an error using "as.Date", try use anytime::anydate() instead.
 
 2.4) In the data Sarah is conversing with several people but mainly her mother. We are only interested in the child-mother conversations. Make a dataframe where you only keep the rows where the speaker is "MOT" OR "CHI". I would suggest using filter() to do this. You need to pass it a logical statement like (xxx == yy). You say "Or" in R with "|". A logical "Or" statement looks like (xxx == yy | xxx == zz)
 ```{R}
-
+df <- subset(sarah_data, Speaker == "MOT" | Speaker == "CHI")
+View(df_mot_chi)
+?subset
 ```
 HELP: https://r4ds.had.co.nz/transform.html#dplyr-basics
 
@@ -118,7 +120,8 @@ To find any special character you need two things. First you need the regular ex
 3.1) Make a new column in your dataset by using str_replace_all and regular expressions to remove all special characters:
 
 ```{R}
-
+?str_replace_all
+df$clean <- str_replace_all(df_mot_chi$Gloss, "[:punct:]", "")
 ```
 TIP: https://stringr.tidyverse.org/articles/regular-expressions.html
 
@@ -134,9 +137,11 @@ In this part we will calculate the Mean Length of Utterances for the child and m
 Each cell in the cleaned text column corresponds to an utterance. So for each date we need to calculate the total number of words said for child and mother, and how many utterancess each have used.
 
 
-3.1) The function "stri_count_words" from the package "stringi" does excatly what you would expect it to do. First install/load "stringi". Secondly, create a new column using "stri_count_words" to count the number of words in each utterance. 
+3.2) The function "stri_count_words" from the package "stringi" does excatly what you would expect it to do. First install/load "stringi". Secondly, create a new column using "stri_count_words" to count the number of words in each utterance. 
 ```{R} 
-
+?stri_count_words
+df$Count <- stri_count_words(df$clean)
+  
 ```
 
 
@@ -146,6 +151,9 @@ By using group_by(Speaker) on our dataframe the computer will know that further 
 
 3.3)Use group_by to create a new data frame. You should give three arguments to group_by: your dataframe, Speaker and Date.
 ```{R}
+?group_by
+
+df_group <- group_by(df, Speaker, Date)
 
 ```
 Group_by doesn't change anything about the data, its effect is first visible when we apply further functions (if we wanted to apply functions to the full data frame again grouping can be removed with ungroup())
@@ -164,16 +172,17 @@ I have already given you the structure of how summarise can used to create a new
 hint. each row corresponds to a single utterance. Roughly speaking, the function n() calculates the number of rows that went into the calculation, so you can use n() to calculate the number of utterances (the function doesn't take any arguments)
 ```{R}
 
-mlu_df <- summarise("grouped_dataframe", word_sum = "function"("variable"),
-                                         utterances = "function"("variable"),
-                                         mlu =  "sum of words"/ "number of utterances")
-
+mlu_df <- summarise(df_group, word_sum = sum(Count),
+                        utterances = length(clean),
+                        mlu =  word_sum / utterances)
 
 ```  
 4.5) View the data frame, click on "Date" to sort by it and see if child and mother each have a MLU value for each date
 
 4.6) Lastly, remember to save the data
 ```{R}
+write.csv(df_group, file = "df_group.csv")
+write.csv(mlu_df, file = "mlu_df.csv")
 ```
 
 If everything worked out as it should then you should now have a nifty data frame with MLUs for child and mother for each date. What a day!
